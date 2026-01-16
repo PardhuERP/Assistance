@@ -56,6 +56,7 @@ button{
   <div id="text"></div>
 </div>
 
+    
 <script>
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -64,14 +65,26 @@ const recognition = new SpeechRecognition();
 recognition.lang = "en-IN";
 recognition.interimResults = false;
 
+let voicesLoaded = false;
+
+// 🔊 INIT SPEECH ENGINE (IMPORTANT)
+function initVoice(){
+  if(voicesLoaded) return;
+  speechSynthesis.getVoices();
+  voicesLoaded = true;
+}
+
 function speak(msg){
+  speechSynthesis.cancel(); // Android fix
   const speech = new SpeechSynthesisUtterance(msg);
   speech.lang = "en-IN";
   speech.rate = 1;
+  speech.volume = 1;
   speechSynthesis.speak(speech);
 }
 
 function startListening(){
+  initVoice(); // 👈 VERY IMPORTANT
   document.querySelector(".status").innerText = "Listening...";
   recognition.start();
 }
@@ -114,12 +127,12 @@ function handleCommand(text){
   else if(text.includes("stop")){
     reply = "Okay, stopping";
     speechSynthesis.cancel();
+    return;
   }
 
   speak(reply);
   document.querySelector(".status").innerText = "Tap and speak";
 }
 </script>
-
 </body>
 </html>
