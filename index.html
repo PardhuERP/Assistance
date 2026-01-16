@@ -114,15 +114,21 @@ recognition.onresult = function(e){
 
   // 🟢 WAKE WORD
   if(!isAwake){
-    if(text.includes("hey ram")){
-      isAwake = true;
-      speak("Cheppandi, nenu vintunnanu", "te-IN");
-      document.querySelector(".status").innerText = "Awake 🎧";
-    } else {
-      document.querySelector(".status").innerText = "Say 'Hey Ram'";
-    }
-    return;
+  if(text.includes("hey ram")){
+    isAwake = true;
+    speak("Cheppandi, nenu vintunnanu", "te-IN");
+    document.querySelector(".status").innerText = "Listening...";
+
+    // 🔁 RESTART LISTENING FOR NEXT QUESTION
+    recognition.stop();
+    setTimeout(() => {
+      recognition.start();
+    }, 800);
+  } else {
+    document.querySelector(".status").innerText = "Say 'Hey Ram'";
   }
+  return;
+}
 
   // 🟢 HANDLE COMMAND AFTER WAKE
   document.querySelector(".status").innerText = "Thinking...";
