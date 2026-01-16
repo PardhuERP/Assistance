@@ -142,28 +142,25 @@ if(text.includes("news") || text.includes("latest news")){
   async function getLatestNews(){
   try{
     const rssUrl =
-      "https://api.allorigins.win/get?url=" +
+      "https://api.rss2json.com/v1/api.json?rss_url=" +
       encodeURIComponent("https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en");
 
     const res = await fetch(rssUrl);
     const data = await res.json();
 
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(data.contents, "text/xml");
-    const item = xml.querySelector("item > title");
-
-    if(item){
-      speak("Latest news. " + item.textContent, "en-IN");
-    }else{
+    if(data.items && data.items.length > 0){
+      const headline = data.items[0].title;
+      speak("Latest news. " + headline, "en-IN");
+    } else {
       speak("Sorry, no news available right now");
     }
 
-  }catch{
-    speak("Unable to fetch latest news right now");
+  } catch (e){
+    speak("Unable to fetch latest news now");
   }
 
   reset();
-  }
+}
 
 /* ---------- RESET ---------- */
 function reset(){
