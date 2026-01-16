@@ -46,6 +46,7 @@ button{
   <div id="text"></div>
 </div>
 
+
 <script>
 /* ---------- SPEECH ---------- */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -55,6 +56,7 @@ recognition.interimResults = false;
 recognition.continuous = false;
 
 /* ---------- STATE ---------- */
+let keepListening = false;   // 👈 NEW
 let state = "idle"; // idle | awake | answering
 let voiceReady = false;
 
@@ -76,6 +78,7 @@ function speak(text, lang="en-IN"){
 /* ---------- START ---------- */
 function startListening(){
   initVoice();
+  keepListening = true;   // 👈 enable continuous mode
   document.querySelector(".status").innerText = "Say 'Hey Ram'";
   try{ recognition.start(); }catch{}
 }
@@ -103,8 +106,10 @@ recognition.onresult = e => {
 
 /* ---------- AUTO RESTART ---------- */
 recognition.onend = () => {
-  if(state !== "answering"){
-    setTimeout(()=>{ try{recognition.start()}catch{} }, 600);
+  if(keepListening){
+    setTimeout(() => {
+      try{ recognition.start(); }catch{}
+    }, 700);
   }
 };
 
