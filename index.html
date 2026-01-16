@@ -150,6 +150,7 @@ function handleCommand(text){
   if(text.includes("time") || text.includes("samayam")){
     speak(
       isTelugu ? 
+      u.rate = lang === "te-IN" ? 0.9 : 1;
       "Ippudu samayam " + new Date().toLocaleTimeString() :
       "Current time is " + new Date().toLocaleTimeString(),
       isTelugu ? "te-IN" : "en-IN"
@@ -299,6 +300,12 @@ async function askAI(question, isTelugu){
     speak(data.reply || "Ardham kale", isTelugu ? "te-IN" : "en-IN");
   } catch {
     speak(
+      const jokes = [
+  "Why did the computer go to the doctor? Because it caught a virus.",
+  "Why was the computer cold? Because it forgot to close Windows.",
+  "Why did the keyboard break up? Too many arguments."
+];
+speak(jokes[Math.floor(Math.random()*jokes.length)], "en-IN");
       isTelugu ? "Network samasya undi" : "Network error",
       isTelugu ? "te-IN" : "en-IN"
     );
