@@ -174,18 +174,119 @@ function handleCommand(text){
       isTelugu ? "Mee ku swagatham" : "You are welcome",
       isTelugu ? "te-IN" : "en-IN"
     );
+<script>
+/* ---------- SPEECH RECOGNITION ---------- */
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const recognition = new SpeechRecognition();
+recognition.lang = "en-IN";
+recognition.interimResults = false;
+recognition.continuous = false;
+
+/* ---------- STATE ---------- */
+let state = "idle"; // idle | awake | answering
+let voiceReady = false;
+
+/* ---------- VOICE INIT ---------- */
+function initVoice(){
+  if(voiceReady) return;
+  speechSynthesis.getVoices();
+  voiceReady = true;
+}
+
+/* ---------- SPEAK ---------- */
+function speak(msg, lang="en-IN"){
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(msg);
+  u.lang = lang;
+  u.rate = 1;
+  speechSynthesis.speak(u);
+}
+
+/* ---------- START ---------- */
+function startListening(){
+  initVoice();
+  document.querySelector(".status").innerText = "Say 'Hey Ram'";
+  try { recognition.start(); } catch(e){}
+}
+
+/* ---------- RESULT ---------- */
+recognition.onresult = function(e){
+  const text = e.results[0][0].transcript.toLowerCase();
+  document.getElementById("text").innerText = "You: " + text;
+
+  /* ---- IDLE → WAKE ---- */
+  if(state === "idle"){
+    if(text.includes("hey ram")){
+      state = "awake";
+      speak("Cheppandi, nenu vintunnanu", "te-IN");
+      document.querySelector(".status").innerText = "Listening...";
+    }
+    return;
+  }
+
+  /* ---- AWAKE → COMMAND ---- */
+  if(state === "awake"){
+    state = "answering";
+    document.querySelector(".status").innerText = "Thinking...";
+    handleCommand(text);
+  }
+};
+
+/* ---------- ON END (MOST IMPORTANT PART) ---------- */
+recognition.onend = function(){
+  if(state !== "answering"){
+    // Keep listening for wake word or next command
+    setTimeout(() => {
+      try { recognition.start(); } catch(e){}
+    }, 600);
+  }
+};
+
+/* ---------- COMMAND HANDLER ---------- */
+function handleCommand(text){
+
+  const isTelugu = /[\u0C00-\u0C7F]/.test(text);
+
+  if(text.includes("time") || text.includes("samayam")){
+    speak(
+      isTelugu
+        ? "Ippudu samayam " + new Date().toLocaleTimeString()
+        : "Current time is " + new Date().toLocaleTimeString(),
+      isTelugu ? "te-IN" : "en-IN"
+    );
     reset();
     return;
   }
 
-  // Fallback to worker (FREE brain)
+  if(text.includes("joke")){
+    speak(
+      isTelugu
+        ? "Computer doctor daggariki enduku vellindi ante, virus pattindani."
+        : "Why did the computer go to the doctor? Because it caught a virus.",
+      isTelugu ? "te-IN" : "en-IN"
+    );
+    reset();
+    return;
+  }
+
+  if(text.includes("thank")){
+    speak(
+      isTelugu ? "Mee ku swagatham" : "You are welcome",
+      isTelugu ? "te-IN" : "en-IN"
+    );
+    reset();
+    return;
+  }
+
   askAI(text, isTelugu);
 }
 
-/* ---------- FREE WORKER CALL ---------- */
+/* ---------- FREE WORKER ---------- */
 async function askAI(question, isTelugu){
   try{
-    const response = await fetch(
+    const res = await fetch(
       "https://morning-block-a72d.valentin-ch5.workers.dev",
       {
         method:"POST",
@@ -194,32 +295,21 @@ async function askAI(question, isTelugu){
       }
     );
 
-    const data = await response.json();
-
-    speak(
-      data.reply || "Sorry, ardham kale",
-      isTelugu ? "te-IN" : "en-IN"
-    );
-
-  }catch{
+    const data = await res.json();
+    speak(data.reply || "Ardham kale", isTelugu ? "te-IN" : "en-IN");
+  } catch {
     speak(
       isTelugu ? "Network samasya undi" : "Network error",
       isTelugu ? "te-IN" : "en-IN"
     );
   }
-
   reset();
 }
 
 /* ---------- RESET ---------- */
 function reset(){
-  isAwake = false;
+  state = "idle";
   document.querySelector(".status").innerText = "Say 'Hey Ram'";
-
-  // 🔁 Ready for next wake word
-  setTimeout(() => {
-    recognition.start();
-  }, 1000);
 }
 </script>
 
