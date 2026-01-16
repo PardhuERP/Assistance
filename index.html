@@ -78,29 +78,32 @@ const SpeechRecognition =
 const recognition = new SpeechRecognition();
 recognition.lang = "en-IN";
 recognition.interimResults = false;
+recognition.continuous = false;
 
-/* ---------- SPEECH SYNTHESIS ---------- */
+/* ---------- STATE ---------- */
+let isAwake = false;
 let voiceReady = false;
 
+/* ---------- VOICE INIT ---------- */
 function initVoice(){
   if(voiceReady) return;
   speechSynthesis.getVoices();
   voiceReady = true;
 }
 
-function speak(msg){
+/* ---------- SPEAK ---------- */
+function speak(msg, lang="en-IN"){
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(msg);
-  u.lang = "en-IN";
+  u.lang = lang;
   u.rate = 1;
-  u.pitch = 1;
   speechSynthesis.speak(u);
 }
 
 /* ---------- START LISTEN ---------- */
 function startListening(){
   initVoice();
-  document.querySelector(".status").innerText = "Listening...";
+  document.querySelector(".status").innerText = "Listening for 'Hey Ram'...";
   recognition.start();
 }
 
@@ -108,92 +111,104 @@ function startListening(){
 recognition.onresult = function(e){
   const text = e.results[0][0].transcript.toLowerCase();
   document.getElementById("text").innerText = "You: " + text;
+
+  // 🟢 WAKE WORD
+  if(!isAwake){
+    if(text.includes("hey ram")){
+      isAwake = true;
+      speak("Cheppandi, nenu vintunnanu", "te-IN");
+      document.querySelector(".status").innerText = "Awake 🎧";
+    } else {
+      document.querySelector(".status").innerText = "Say 'Hey Ram'";
+    }
+    return;
+  }
+
+  // 🟢 HANDLE COMMAND AFTER WAKE
   document.querySelector(".status").innerText = "Thinking...";
   handleCommand(text);
 };
 
+/* ---------- ERROR ---------- */
 recognition.onerror = function(){
-  speak("Sorry, I didn't catch that");
   document.querySelector(".status").innerText = "Tap and speak";
 };
 
 /* ---------- COMMAND HANDLER ---------- */
 function handleCommand(text){
 
-  // Local fast commands
-  if(text.includes("open google")){
-    speak("Opening Google");
-    window.open("https://google.com","_blank");
-    resetStatus();
+  // Telugu detection (simple)
+  const isTelugu = /[\u0C00-\u0C7F]/.test(text);
+
+  // Local commands
+  if(text.includes("time") || text.includes("samayam")){
+    speak(
+      isTelugu ? 
+      "Ippudu samayam " + new Date().toLocaleTimeString() :
+      "Current time is " + new Date().toLocaleTimeString(),
+      isTelugu ? "te-IN" : "en-IN"
+    );
+    reset();
     return;
   }
 
-  if(text.includes("open youtube")){
-    speak("Opening YouTube");
-    window.open("https://youtube.com","_blank");
-    resetStatus();
+  if(text.includes("joke") || text.includes("jok")) {
+    speak(
+      isTelugu ?
+      "Computer doctor daggariki enduku vellindi ante, virus pattindani." :
+      "Why did the computer go to the doctor? Because it caught a virus.",
+      isTelugu ? "te-IN" : "en-IN"
+    );
+    reset();
     return;
   }
 
-  if(text.includes("time")){
-    speak("Current time is " + new Date().toLocaleTimeString());
-    resetStatus();
+  if(text.includes("thank") || text.includes("dhanyavadalu")){
+    speak(
+      isTelugu ? "Mee ku swagatham" : "You are welcome",
+      isTelugu ? "te-IN" : "en-IN"
+    );
+    reset();
     return;
   }
 
-  if(text.includes("date")){
-    speak("Today is " + new Date().toDateString());
-    resetStatus();
-    return;
-  }
-
-  if(text.includes("who are you")){
-    speak("I am Ram Assistant, your personal AI helper");
-    resetStatus();
-    return;
-  }
-
-  // AI fallback
-  askAI(text);
+  // Fallback to worker (FREE brain)
+  askAI(text, isTelugu);
 }
 
-/* ---------- AI VIA CLOUDFLARE WORKER ---------- */
-async function askAI(question){
-  speak("Let me think");
-
+/* ---------- FREE WORKER CALL ---------- */
+async function askAI(question, isTelugu){
   try{
     const response = await fetch(
       "https://morning-block-a72d.valentin-ch5.workers.dev",
       {
-        method: "POST",
-        mode: "cors",              // ✅ IMPORTANT
-        cache: "no-store",         // ✅ IMPORTANT
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({ message: question })
       }
     );
 
-    if(!response.ok){
-      throw new Error("HTTP error");
-    }
-
     const data = await response.json();
 
-    if(data.reply){
-      speak(data.reply);
-    }else{
-      speak("Sorry, no reply from AI");
-    }
+    speak(
+      data.reply || "Sorry, ardham kale",
+      isTelugu ? "te-IN" : "en-IN"
+    );
 
-  }catch(err){
-    console.error("Worker error:", err);
-    speak("Network error. Please try again");
+  }catch{
+    speak(
+      isTelugu ? "Network samasya undi" : "Network error",
+      isTelugu ? "te-IN" : "en-IN"
+    );
   }
 
-  resetStatus();
+  reset();
+}
+
+/* ---------- RESET ---------- */
+function reset(){
+  isAwake = false;
+  document.querySelector(".status").innerText = "Say 'Hey Ram'";
 }
 </script>
 
