@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ram Assistant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
+.box{
+  background:rgba(0,0,0,0.4);
+  padding:25px;
+  border-radius:16px;
+  width:90%;
+  max-width:400px;
+  text-align:center;
+}
+h2{margin-top:0}
+button{
+  margin-top:15px;
+  padding:14px 25px;
+  font-size:18px;
+  border:none;
+  border-radius:30px;
+  background:#00ffcc;
+  color:#000;
+  cursor:pointer;
+}
+#text{
+  margin-top:20px;
+  min-height:40px;
+  font-size:16px;
+}
+.status{
+  font-size:13px;
+  opacity:0.8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>🎙 Ram Assistant</h2>
+  <div class="status">Tap and speak</div>
+  <button onclick="startListening()">🎤 Speak</button>
+  <div id="text"></div>
+</div>
+
+<script>
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const recognition = new SpeechRecognition();
+recognition.lang = "en-IN";
+recognition.interimResults = false;
+
+function speak(msg){
+  const speech = new SpeechSynthesisUtterance(msg);
+  speech.lang = "en-IN";
+  speech.rate = 1;
+  speechSynthesis.speak(speech);
+}
+
+function startListening(){
+  document.querySelector(".status").innerText = "Listening...";
+  recognition.start();
+}
+
+recognition.onresult = function(e){
+  const userText = e.results[0][0].transcript.toLowerCase();
+  document.getElementById("text").innerText = "You: " + userText;
+  document.querySelector(".status").innerText = "Processing...";
+  handleCommand(userText);
+};
+
+recognition.onerror = function(){
+  speak("Sorry, I didn't catch that");
+  document.querySelector(".status").innerText = "Tap and speak";
+};
+
+function handleCommand(text){
+  let reply = "Sorry, I don't understand";
+
+  if(text.includes("hello")){
+    reply = "Hello! How can I help you?";
+  }
+  else if(text.includes("time")){
+    reply = "Current time is " + new Date().toLocaleTimeString();
+  }
+  else if(text.includes("date")){
+    reply = "Today is " + new Date().toDateString();
+  }
+  else if(text.includes("open google")){
+    reply = "Opening Google";
+    window.open("https://google.com","_blank");
+  }
+  else if(text.includes("open youtube")){
+    reply = "Opening YouTube";
+    window.open("https://youtube.com","_blank");
+  }
+  else if(text.includes("who are you")){
+    reply = "I am Ram Assistant, your personal helper";
+  }
+  else if(text.includes("stop")){
+    reply = "Okay, stopping";
+    speechSynthesis.cancel();
+  }
+
+  speak(reply);
+  document.querySelector(".status").innerText = "Tap and speak";
+}
+</script>
+
+</body>
+</html>
