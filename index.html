@@ -166,28 +166,34 @@ async function askAI(question){
       "https://morning-block-a72d.valentin-ch5.workers.dev",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        mode: "cors",              // ✅ IMPORTANT
+        cache: "no-store",         // ✅ IMPORTANT
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ message: question })
       }
     );
+
+    if(!response.ok){
+      throw new Error("HTTP error");
+    }
 
     const data = await response.json();
 
     if(data.reply){
       speak(data.reply);
     }else{
-      speak("Sorry, I didn't get a response");
+      speak("Sorry, no reply from AI");
     }
 
   }catch(err){
+    console.error("Worker error:", err);
     speak("Network error. Please try again");
   }
 
   resetStatus();
-}
-
-function resetStatus(){
-  document.querySelector(".status").innerText = "Tap and speak";
 }
 </script>
 
