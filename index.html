@@ -215,6 +215,11 @@ async function askAI(question, isTelugu){
 function reset(){
   isAwake = false;
   document.querySelector(".status").innerText = "Say 'Hey Ram'";
+
+  // 🔁 Ready for next wake word
+  setTimeout(() => {
+    recognition.start();
+  }, 1000);
 }
 </script>
 
