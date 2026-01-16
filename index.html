@@ -130,10 +130,40 @@ function handleCommand(text){
     speak(jokes[Math.floor(Math.random()*jokes.length)], "en-IN");
     reset(); return;
   }
-
+if(text.includes("news") || text.includes("latest news")){
+  speak("Fetching latest news");
+  getLatestNews();
+  return;
+    }
   speak(isTelugu ? "Ardham kale" : "I did not understand", isTelugu?"te-IN":"en-IN");
   reset();
 }
+
+  async function getLatestNews(){
+  try{
+    const rssUrl =
+      "https://api.allorigins.win/get?url=" +
+      encodeURIComponent("https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en");
+
+    const res = await fetch(rssUrl);
+    const data = await res.json();
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(data.contents, "text/xml");
+    const item = xml.querySelector("item > title");
+
+    if(item){
+      speak("Latest news. " + item.textContent, "en-IN");
+    }else{
+      speak("Sorry, no news available right now");
+    }
+
+  }catch{
+    speak("Unable to fetch latest news right now");
+  }
+
+  reset();
+  }
 
 /* ---------- RESET ---------- */
 function reset(){
