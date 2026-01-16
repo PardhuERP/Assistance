@@ -23,15 +23,6 @@ body{
   width:90%;
   max-width:420px;
   text-align:center;
-  box-shadow:0 10px 30px rgba(0,0,0,0.4);
-}
-h2{
-  margin:0 0 10px;
-  font-size:22px;
-}
-.status{
-  font-size:13px;
-  opacity:0.85;
 }
 button{
   margin-top:18px;
@@ -41,145 +32,23 @@ button{
   border-radius:30px;
   background:#00ffcc;
   color:#000;
-  cursor:pointer;
 }
-button:active{
-  transform:scale(0.97);
-}
-#text{
-  margin-top:18px;
-  min-height:42px;
-  font-size:15px;
-  line-height:1.4;
-}
-.footer{
-  margin-top:15px;
-  font-size:11px;
-  opacity:0.6;
-}
+.status{font-size:13px;opacity:.85}
+#text{margin-top:15px;min-height:40px}
 </style>
 </head>
 
 <body>
-
 <div class="box">
   <h2>🎙 Ram Assistant</h2>
-  <div class="status">Tap and speak</div>
+  <div class="status">Tap and say "Hey Ram"</div>
   <button onclick="startListening()">🎤 Speak</button>
   <div id="text"></div>
-  <div class="footer">AI powered voice assistant</div>
 </div>
 
 <script>
-/* ---------- SPEECH RECOGNITION ---------- */
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-
-const recognition = new SpeechRecognition();
-recognition.lang = "en-IN";
-recognition.interimResults = false;
-recognition.continuous = false;
-
-/* ---------- STATE ---------- */
-let isAwake = false;
-let voiceReady = false;
-
-/* ---------- VOICE INIT ---------- */
-function initVoice(){
-  if(voiceReady) return;
-  speechSynthesis.getVoices();
-  voiceReady = true;
-}
-
-/* ---------- SPEAK ---------- */
-function speak(msg, lang="en-IN"){
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(msg);
-  u.lang = lang;
-  u.rate = 1;
-  speechSynthesis.speak(u);
-}
-
-/* ---------- START LISTEN ---------- */
-function startListening(){
-  initVoice();
-  document.querySelector(".status").innerText = "Listening for 'Hey Ram'...";
-  recognition.start();
-}
-
-/* ---------- RESULT ---------- */
-recognition.onresult = function(e){
-  const text = e.results[0][0].transcript.toLowerCase();
-  document.getElementById("text").innerText = "You: " + text;
-
-  // 🟢 WAKE WORD
-  if(!isAwake){
-  if(text.includes("hey ram")){
-    isAwake = true;
-    speak("Cheppandi, nenu vintunnanu", "te-IN");
-    document.querySelector(".status").innerText = "Listening...";
-
-    // 🔁 RESTART LISTENING FOR NEXT QUESTION
-    recognition.stop();
-    setTimeout(() => {
-      recognition.start();
-    }, 800);
-  } else {
-    document.querySelector(".status").innerText = "Say 'Hey Ram'";
-  }
-  return;
-}
-
-  // 🟢 HANDLE COMMAND AFTER WAKE
-  document.querySelector(".status").innerText = "Thinking...";
-  handleCommand(text);
-};
-
-/* ---------- ERROR ---------- */
-recognition.onerror = function(){
-  document.querySelector(".status").innerText = "Tap and speak";
-};
-
-/* ---------- COMMAND HANDLER ---------- */
-function handleCommand(text){
-
-  // Telugu detection (simple)
-  const isTelugu = /[\u0C00-\u0C7F]/.test(text);
-
-  // Local commands
-  if(text.includes("time") || text.includes("samayam")){
-    speak(
-      isTelugu ? 
-      u.rate = lang === "te-IN" ? 0.9 : 1;
-      "Ippudu samayam " + new Date().toLocaleTimeString() :
-      "Current time is " + new Date().toLocaleTimeString(),
-      isTelugu ? "te-IN" : "en-IN"
-    );
-    reset();
-    return;
-  }
-
-  if(text.includes("joke") || text.includes("jok")) {
-    speak(
-      isTelugu ?
-      "Computer doctor daggariki enduku vellindi ante, virus pattindani." :
-      "Why did the computer go to the doctor? Because it caught a virus.",
-      isTelugu ? "te-IN" : "en-IN"
-    );
-    reset();
-    return;
-  }
-
-  if(text.includes("thank") || text.includes("dhanyavadalu")){
-    speak(
-      isTelugu ? "Mee ku swagatham" : "You are welcome",
-      isTelugu ? "te-IN" : "en-IN"
-    );
-<script>
-/* ---------- SPEECH RECOGNITION ---------- */
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-
+/* ---------- SPEECH ---------- */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = new SpeechRecognition();
 recognition.lang = "en-IN";
 recognition.interimResults = false;
@@ -189,19 +58,18 @@ recognition.continuous = false;
 let state = "idle"; // idle | awake | answering
 let voiceReady = false;
 
-/* ---------- VOICE INIT ---------- */
+/* ---------- VOICE ---------- */
 function initVoice(){
   if(voiceReady) return;
   speechSynthesis.getVoices();
   voiceReady = true;
 }
 
-/* ---------- SPEAK ---------- */
-function speak(msg, lang="en-IN"){
+function speak(text, lang="en-IN"){
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(msg);
+  const u = new SpeechSynthesisUtterance(text);
   u.lang = lang;
-  u.rate = 1;
+  u.rate = lang === "te-IN" ? 0.9 : 1;
   speechSynthesis.speak(u);
 }
 
@@ -209,25 +77,23 @@ function speak(msg, lang="en-IN"){
 function startListening(){
   initVoice();
   document.querySelector(".status").innerText = "Say 'Hey Ram'";
-  try { recognition.start(); } catch(e){}
+  try{ recognition.start(); }catch{}
 }
 
 /* ---------- RESULT ---------- */
-recognition.onresult = function(e){
+recognition.onresult = e => {
   const text = e.results[0][0].transcript.toLowerCase();
   document.getElementById("text").innerText = "You: " + text;
 
-  /* ---- IDLE → WAKE ---- */
   if(state === "idle"){
     if(text.includes("hey ram")){
       state = "awake";
-      speak("Cheppandi, nenu vintunnanu", "te-IN");
+      speak("Cheppandi nenu vintunnanu", "te-IN");
       document.querySelector(".status").innerText = "Listening...";
     }
     return;
   }
 
-  /* ---- AWAKE → COMMAND ---- */
   if(state === "awake"){
     state = "answering";
     document.querySelector(".status").innerText = "Thinking...";
@@ -235,81 +101,37 @@ recognition.onresult = function(e){
   }
 };
 
-/* ---------- ON END (MOST IMPORTANT PART) ---------- */
-recognition.onend = function(){
+/* ---------- AUTO RESTART ---------- */
+recognition.onend = () => {
   if(state !== "answering"){
-    // Keep listening for wake word or next command
-    setTimeout(() => {
-      try { recognition.start(); } catch(e){}
-    }, 600);
+    setTimeout(()=>{ try{recognition.start()}catch{} }, 600);
   }
 };
 
-/* ---------- COMMAND HANDLER ---------- */
+/* ---------- COMMANDS ---------- */
 function handleCommand(text){
-
   const isTelugu = /[\u0C00-\u0C7F]/.test(text);
 
   if(text.includes("time") || text.includes("samayam")){
     speak(
-      isTelugu
-        ? "Ippudu samayam " + new Date().toLocaleTimeString()
-        : "Current time is " + new Date().toLocaleTimeString(),
+      isTelugu ? "Ippudu samayam " + new Date().toLocaleTimeString()
+               : "Current time is " + new Date().toLocaleTimeString(),
       isTelugu ? "te-IN" : "en-IN"
     );
-    reset();
-    return;
+    reset(); return;
   }
 
   if(text.includes("joke")){
-    speak(
-      isTelugu
-        ? "Computer doctor daggariki enduku vellindi ante, virus pattindani."
-        : "Why did the computer go to the doctor? Because it caught a virus.",
-      isTelugu ? "te-IN" : "en-IN"
-    );
-    reset();
-    return;
+    const jokes = [
+      "Why did the computer go to the doctor? Because it caught a virus.",
+      "Why was the computer cold? Because it forgot to close Windows.",
+      "Why did the keyboard break up? Too many arguments."
+    ];
+    speak(jokes[Math.floor(Math.random()*jokes.length)], "en-IN");
+    reset(); return;
   }
 
-  if(text.includes("thank")){
-    speak(
-      isTelugu ? "Mee ku swagatham" : "You are welcome",
-      isTelugu ? "te-IN" : "en-IN"
-    );
-    reset();
-    return;
-  }
-
-  askAI(text, isTelugu);
-}
-
-/* ---------- FREE WORKER ---------- */
-async function askAI(question, isTelugu){
-  try{
-    const res = await fetch(
-      "https://morning-block-a72d.valentin-ch5.workers.dev",
-      {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ message: question })
-      }
-    );
-
-    const data = await res.json();
-    speak(data.reply || "Ardham kale", isTelugu ? "te-IN" : "en-IN");
-  } catch {
-    speak(
-      const jokes = [
-  "Why did the computer go to the doctor? Because it caught a virus.",
-  "Why was the computer cold? Because it forgot to close Windows.",
-  "Why did the keyboard break up? Too many arguments."
-];
-speak(jokes[Math.floor(Math.random()*jokes.length)], "en-IN");
-      isTelugu ? "Network samasya undi" : "Network error",
-      isTelugu ? "te-IN" : "en-IN"
-    );
-  }
+  speak(isTelugu ? "Ardham kale" : "I did not understand", isTelugu?"te-IN":"en-IN");
   reset();
 }
 
@@ -319,6 +141,5 @@ function reset(){
   document.querySelector(".status").innerText = "Say 'Hey Ram'";
 }
 </script>
-
 </body>
 </html>
