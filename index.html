@@ -130,33 +130,60 @@ function handleCommand(text){
     speak(jokes[Math.floor(Math.random()*jokes.length)], "en-IN");
     reset(); return;
   }
-if(text.includes("news") || text.includes("latest news")){
-  speak("Fetching latest news");
-  getLatestNews();
+if(text.includes("news")){
+  speak("Fetching news");
+  getLatestNews(text);
   return;
-    }
+}
   speak(isTelugu ? "Ardham kale" : "I did not understand", isTelugu?"te-IN":"en-IN");
   reset();
 }
 
-  async function getLatestNews(){
-  try{
-    const rssUrl =
-      "https://api.rss2json.com/v1/api.json?rss_url=" +
-      encodeURIComponent("https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en");
+  async function getLatestNews(query){
+  let topic = "top";
+  let speakPrefix = "Latest news.";
 
-    const res = await fetch(rssUrl);
+  if(query.includes("stock") || query.includes("market") || query.includes("share")){
+    topic = "business";
+    speakPrefix = "Latest stock market news.";
+  }
+  else if(query.includes("politic") || query.includes("government") || query.includes("election")){
+    topic = "politics";
+    speakPrefix = "Latest political news.";
+  }
+  else if(query.includes("sport") || query.includes("cricket") || query.includes("ipl")){
+    topic = "sports";
+    speakPrefix = "Latest sports news.";
+  }
+  else if(query.includes("tech") || query.includes("ai") || query.includes("mobile")){
+    topic = "technology";
+    speakPrefix = "Latest technology news.";
+  }
+
+  try{
+    const rssMap = {
+      top: "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en",
+      business: "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-IN&gl=IN&ceid=IN:en",
+      politics: "https://news.google.com/rss/headlines/section/topic/POLITICS?hl=en-IN&gl=IN&ceid=IN:en",
+      sports: "https://news.google.com/rss/headlines/section/topic/SPORTS?hl=en-IN&gl=IN&ceid=IN:en",
+      technology: "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en-IN&gl=IN&ceid=IN:en"
+    };
+
+    const url =
+      "https://api.rss2json.com/v1/api.json?rss_url=" +
+      encodeURIComponent(rssMap[topic]);
+
+    const res = await fetch(url);
     const data = await res.json();
 
     if(data.items && data.items.length > 0){
-      const headline = data.items[0].title;
-      speak("Latest news. " + headline, "en-IN");
+      speak(speakPrefix + " " + data.items[0].title, "en-IN");
     } else {
-      speak("Sorry, no news available right now");
+      speak("Sorry, no related news found right now");
     }
 
-  } catch (e){
-    speak("Unable to fetch latest news now");
+  } catch {
+    speak("Unable to fetch related news now");
   }
 
   reset();
