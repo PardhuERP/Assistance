@@ -17,17 +17,25 @@ body{
   height:100vh;
 }
 .box{
-  background:rgba(0,0,0,0.4);
+  background:rgba(0,0,0,0.45);
   padding:25px;
   border-radius:16px;
   width:90%;
-  max-width:400px;
+  max-width:420px;
   text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
 }
-h2{margin-top:0}
+h2{
+  margin:0 0 10px;
+  font-size:22px;
+}
+.status{
+  font-size:13px;
+  opacity:0.85;
+}
 button{
-  margin-top:15px;
-  padding:14px 25px;
+  margin-top:18px;
+  padding:14px 28px;
   font-size:18px;
   border:none;
   border-radius:30px;
@@ -35,14 +43,19 @@ button{
   color:#000;
   cursor:pointer;
 }
-#text{
-  margin-top:20px;
-  min-height:40px;
-  font-size:16px;
+button:active{
+  transform:scale(0.97);
 }
-.status{
-  font-size:13px;
-  opacity:0.8;
+#text{
+  margin-top:18px;
+  min-height:42px;
+  font-size:15px;
+  line-height:1.4;
+}
+.footer{
+  margin-top:15px;
+  font-size:11px;
+  opacity:0.6;
 }
 </style>
 </head>
@@ -54,10 +67,11 @@ button{
   <div class="status">Tap and speak</div>
   <button onclick="startListening()">🎤 Speak</button>
   <div id="text"></div>
+  <div class="footer">AI powered voice assistant</div>
 </div>
 
-    
 <script>
+/* ---------- SPEECH RECOGNITION ---------- */
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -65,35 +79,37 @@ const recognition = new SpeechRecognition();
 recognition.lang = "en-IN";
 recognition.interimResults = false;
 
-let voicesLoaded = false;
+/* ---------- SPEECH SYNTHESIS ---------- */
+let voiceReady = false;
 
-// 🔊 INIT SPEECH ENGINE (IMPORTANT)
 function initVoice(){
-  if(voicesLoaded) return;
+  if(voiceReady) return;
   speechSynthesis.getVoices();
-  voicesLoaded = true;
+  voiceReady = true;
 }
 
 function speak(msg){
-  speechSynthesis.cancel(); // Android fix
-  const speech = new SpeechSynthesisUtterance(msg);
-  speech.lang = "en-IN";
-  speech.rate = 1;
-  speech.volume = 1;
-  speechSynthesis.speak(speech);
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(msg);
+  u.lang = "en-IN";
+  u.rate = 1;
+  u.pitch = 1;
+  speechSynthesis.speak(u);
 }
 
+/* ---------- START LISTEN ---------- */
 function startListening(){
-  initVoice(); // 👈 VERY IMPORTANT
+  initVoice();
   document.querySelector(".status").innerText = "Listening...";
   recognition.start();
 }
 
+/* ---------- RESULT ---------- */
 recognition.onresult = function(e){
-  const userText = e.results[0][0].transcript.toLowerCase();
-  document.getElementById("text").innerText = "You: " + userText;
-  document.querySelector(".status").innerText = "Processing...";
-  handleCommand(userText);
+  const text = e.results[0][0].transcript.toLowerCase();
+  document.getElementById("text").innerText = "You: " + text;
+  document.querySelector(".status").innerText = "Thinking...";
+  handleCommand(text);
 };
 
 recognition.onerror = function(){
@@ -101,38 +117,79 @@ recognition.onerror = function(){
   document.querySelector(".status").innerText = "Tap and speak";
 };
 
+/* ---------- COMMAND HANDLER ---------- */
 function handleCommand(text){
-  let reply = "Sorry, I don't understand";
 
-  if(text.includes("hello")){
-    reply = "Hello! How can I help you?";
-  }
-  else if(text.includes("time")){
-    reply = "Current time is " + new Date().toLocaleTimeString();
-  }
-  else if(text.includes("date")){
-    reply = "Today is " + new Date().toDateString();
-  }
-  else if(text.includes("open google")){
-    reply = "Opening Google";
+  // Local fast commands
+  if(text.includes("open google")){
+    speak("Opening Google");
     window.open("https://google.com","_blank");
-  }
-  else if(text.includes("open youtube")){
-    reply = "Opening YouTube";
-    window.open("https://youtube.com","_blank");
-  }
-  else if(text.includes("who are you")){
-    reply = "I am Ram Assistant, your personal helper";
-  }
-  else if(text.includes("stop")){
-    reply = "Okay, stopping";
-    speechSynthesis.cancel();
+    resetStatus();
     return;
   }
 
-  speak(reply);
+  if(text.includes("open youtube")){
+    speak("Opening YouTube");
+    window.open("https://youtube.com","_blank");
+    resetStatus();
+    return;
+  }
+
+  if(text.includes("time")){
+    speak("Current time is " + new Date().toLocaleTimeString());
+    resetStatus();
+    return;
+  }
+
+  if(text.includes("date")){
+    speak("Today is " + new Date().toDateString());
+    resetStatus();
+    return;
+  }
+
+  if(text.includes("who are you")){
+    speak("I am Ram Assistant, your personal AI helper");
+    resetStatus();
+    return;
+  }
+
+  // AI fallback
+  askAI(text);
+}
+
+/* ---------- AI VIA CLOUDFLARE WORKER ---------- */
+async function askAI(question){
+  speak("Let me think");
+
+  try{
+    const response = await fetch(
+      "https://morning-block-a72d.valentin-ch5.workers.dev",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: question })
+      }
+    );
+
+    const data = await response.json();
+
+    if(data.reply){
+      speak(data.reply);
+    }else{
+      speak("Sorry, I didn't get a response");
+    }
+
+  }catch(err){
+    speak("Network error. Please try again");
+  }
+
+  resetStatus();
+}
+
+function resetStatus(){
   document.querySelector(".status").innerText = "Tap and speak";
 }
 </script>
+
 </body>
 </html>
