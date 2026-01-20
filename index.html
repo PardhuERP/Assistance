@@ -32,6 +32,7 @@ button{
   border-radius:30px;
   background:#00ffcc;
   color:#000;
+  cursor:pointer;
 }
 .status{font-size:13px;opacity:.85}
 #text{margin-top:15px;min-height:40px}
@@ -46,17 +47,18 @@ button{
   <div id="text"></div>
 </div>
 
-
 <script>
 /* ---------- SPEECH ---------- */
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
 const recognition = new SpeechRecognition();
 recognition.lang = "en-IN";
 recognition.interimResults = false;
 recognition.continuous = false;
 
 /* ---------- STATE ---------- */
-let keepListening = false;   // 👈 NEW
+let keepListening = false;
 let state = "idle"; // idle | awake | answering
 let voiceReady = false;
 
@@ -78,7 +80,7 @@ function speak(text, lang="en-IN"){
 /* ---------- START ---------- */
 function startListening(){
   initVoice();
-  keepListening = true;   // 👈 enable continuous mode
+  keepListening = true;
   document.querySelector(".status").innerText = "Say 'Hey Ram'";
   try{ recognition.start(); }catch{}
 }
@@ -107,25 +109,26 @@ recognition.onresult = e => {
 /* ---------- AUTO RESTART ---------- */
 recognition.onend = () => {
   if(keepListening){
-    setTimeout(() => {
-      try{ recognition.start(); }catch{}
-    }, 700);
+    setTimeout(()=>{ try{ recognition.start(); }catch{} }, 700);
   }
 };
 
-/* ---------- COMMANDS ---------- */
+/* ---------- COMMAND HANDLER ---------- */
 function handleCommand(text){
   const isTelugu = /[\u0C00-\u0C7F]/.test(text);
 
+  // Time
   if(text.includes("time") || text.includes("samayam")){
     speak(
-      isTelugu ? "Ippudu samayam " + new Date().toLocaleTimeString()
-               : "Current time is " + new Date().toLocaleTimeString(),
+      isTelugu
+        ? "Ippudu samayam " + new Date().toLocaleTimeString()
+        : "Current time is " + new Date().toLocaleTimeString(),
       isTelugu ? "te-IN" : "en-IN"
     );
     reset(); return;
   }
 
+  // Jokes
   if(text.includes("joke")){
     const jokes = [
       "Why did the computer go to the doctor? Because it caught a virus.",
@@ -135,16 +138,20 @@ function handleCommand(text){
     speak(jokes[Math.floor(Math.random()*jokes.length)], "en-IN");
     reset(); return;
   }
-if(text.includes("news")){
-  speak("Fetching news");
-  getLatestNews(text);
-  return;
-}
-  speak(isTelugu ? "Ardham kale" : "I did not understand", isTelugu?"te-IN":"en-IN");
-  reset();
+
+  // News (context aware)
+  if(text.includes("news")){
+    speak("Fetching news");
+    getLatestNews(text);
+    return;
+  }
+
+  // General knowledge / health / education
+  getGeneralKnowledge(text);
 }
 
-  async function getLatestNews(query){
+/* ---------- NEWS ---------- */
+async function getLatestNews(query){
   let topic = "top";
   let speakPrefix = "Latest news.";
 
@@ -186,7 +193,6 @@ if(text.includes("news")){
     } else {
       speak("Sorry, no related news found right now");
     }
-
   } catch {
     speak("Unable to fetch related news now");
   }
@@ -194,7 +200,8 @@ if(text.includes("news")){
   reset();
 }
 
-  async function getGeneralKnowledge(query){
+/* ---------- GENERAL KNOWLEDGE ---------- */
+async function getGeneralKnowledge(query){
   try{
     const url =
       "https://en.wikipedia.org/api/rest_v1/page/summary/" +
@@ -208,7 +215,6 @@ if(text.includes("news")){
     } else {
       speak("Sorry, I could not find information on that.");
     }
-
   } catch {
     speak("Unable to fetch information right now");
   }
