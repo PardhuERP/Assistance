@@ -194,6 +194,28 @@ if(text.includes("news")){
   reset();
 }
 
+  async function getGeneralKnowledge(query){
+  try{
+    const url =
+      "https://en.wikipedia.org/api/rest_v1/page/summary/" +
+      encodeURIComponent(query);
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if(data.extract){
+      speak(data.extract, "en-IN");
+    } else {
+      speak("Sorry, I could not find information on that.");
+    }
+
+  } catch {
+    speak("Unable to fetch information right now");
+  }
+
+  reset();
+}
+
 /* ---------- RESET ---------- */
 function reset(){
   state = "idle";
