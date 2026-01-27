@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Stock Scanner</title>
+  <style>
+    body { font-family: Arial; background:#111; color:#fff; }
+    table { width:100%; border-collapse: collapse; }
+    th,td { padding:8px; border:1px solid #444; text-align:center; }
+    tr:hover { background:#222; cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<h2>Live Scanner</h2>
+<table id="table"></table>
+
+<script>
+const API = "YOUR_GAS_URL";
+
+async function loadData(){
+  let res = await fetch(API);
+  let data = await res.json();
+
+  let html = `
+  <tr>
+    <th>Stock</th>
+    <th>Chg%</th>
+    <th>Vol</th>
+    <th>Value</th>
+    <th>CE</th>
+  </tr>`;
+
+  data.forEach(d=>{
+    html += `
+    <tr onclick='showCandle(${JSON.stringify(d)})'>
+      <td>${d.stock}</td>
+      <td>${d.change}</td>
+      <td>${d.volume}</td>
+      <td>${d.value}</td>
+      <td>${d.final}</td>
+    </tr>`;
+  });
+
+  document.getElementById("table").innerHTML = html;
+}
+
+function showCandle(d){
+  alert(
+`Stock: ${d.stock}
+Open: ${d.candle.open}
+High: ${d.candle.high}
+Low: ${d.candle.low}
+Close: ${d.candle.close}`
+  );
+}
+
+loadData();
+setInterval(loadData, 5000); // auto refresh
+</script>
+</body>
+</html>
