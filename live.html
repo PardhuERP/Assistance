@@ -82,7 +82,7 @@ async function loadData(){
       <td>${format(d.change)}</td>
       <td>${format(d.volume)}</td>
       <td>${format(d.value)}</td>
-      <td>${d.ce}</td>
+      <td>${format(d.ce)}</td>
       <td><span class="btn" onclick='showChart(${JSON.stringify(d)})'>📊 View</span></td>
     </tr>`;
   });
