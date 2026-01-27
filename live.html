@@ -8,7 +8,6 @@
     table { width:100%; border-collapse: collapse; margin-top:10px; }
     th,td { padding:10px; border:1px solid #333; text-align:center; }
     th { background:#1f1f1f; }
-    tr:hover { background:#2a2a2a; }
 
     .btn {
       padding:6px 10px;
@@ -76,14 +75,14 @@ async function loadData(){
     <th>Candle</th>
   </tr>`;
 
-  data.forEach((d,i)=>{
+  data.forEach(d=>{
     html += `
     <tr>
       <td>${d.stock}</td>
       <td>${format(d.change)}</td>
       <td>${format(d.volume)}</td>
       <td>${format(d.value)}</td>
-      <td>${d.final}</td>
+      <td>${d.ce || "-"}</td>
       <td><span class="btn" onclick='showChart(${JSON.stringify(d)})'>📊 View</span></td>
     </tr>`;
   });
@@ -91,15 +90,13 @@ async function loadData(){
   document.getElementById("table").innerHTML = html;
 }
 
-let chart;
-
 function showChart(d){
   document.getElementById("modal").style.display="block";
   document.getElementById("chartTitle").innerText = d.stock + " Candle";
 
   document.getElementById("chart").innerHTML="";
 
-  chart = LightweightCharts.createChart(
+  let chart = LightweightCharts.createChart(
     document.getElementById("chart"),
     { layout:{background:{color:"#111"}, textColor:"#fff"} }
   );
