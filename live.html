@@ -8,7 +8,16 @@
     table { width:100%; border-collapse: collapse; margin-top:10px; }
     th,td { padding:10px; border:1px solid #333; text-align:center; }
     th { background:#1f1f1f; }
-    tr:hover { background:#2a2a2a; cursor:pointer; }
+    tr:hover { background:#2a2a2a; }
+
+    .btn {
+      padding:6px 10px;
+      background:#00bcd4;
+      color:#000;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+    }
 
     #modal {
       display:none;
@@ -63,24 +72,26 @@ async function loadData(){
     <th>% Change</th>
     <th>Volume</th>
     <th>Value</th>
-    <th>Final</th>
+    <th>CE</th>
+    <th>Candle</th>
   </tr>`;
 
-  data.forEach(d=>{
+  data.forEach((d,i)=>{
     html += `
-    <tr onclick='showChart(${JSON.stringify(d)})'>
+    <tr>
       <td>${d.stock}</td>
       <td>${format(d.change)}</td>
       <td>${format(d.volume)}</td>
       <td>${format(d.value)}</td>
       <td>${d.final}</td>
+      <td><span class="btn" onclick='showChart(${JSON.stringify(d)})'>📊 View</span></td>
     </tr>`;
   });
 
   document.getElementById("table").innerHTML = html;
 }
 
-let chart, series;
+let chart;
 
 function showChart(d){
   document.getElementById("modal").style.display="block";
@@ -93,7 +104,7 @@ function showChart(d){
     { layout:{background:{color:"#111"}, textColor:"#fff"} }
   );
 
-  series = chart.addCandlestickSeries();
+  let series = chart.addCandlestickSeries();
 
   series.setData([{
     time: Math.floor(Date.now()/1000),
