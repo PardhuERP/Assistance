@@ -1,13 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Live Stocks</title>
+  <title>Live Stock Scanner</title>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background:#0D0D0D; color:#fff; }
-    table { width:100%; border-collapse: collapse; margin-top:20px; }
-    th,td { padding:10px; border:1px solid #444; text-align:center; }
-    th { background:#222; }
-    tr:hover { background:#333; cursor:pointer; }
+    body { font-family: Arial; background:#0d0d0d; color:#fff; }
+    table { width:100%; border-collapse: collapse; margin-top:10px; }
+    th,td { padding:10px; border:1px solid #333; text-align:center; }
+    th { background:#1f1f1f; }
+    tr:hover { background:#2a2a2a; cursor:pointer; }
+
+    #modal {
+      display:none;
+      position:fixed;
+      top:0; left:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.8);
+    }
+    #chartBox {
+      width:90%;
+      height:80%;
+      background:#111;
+      margin:5% auto;
+      padding:10px;
+    }
+    #closeBtn {
+      float:right;
+      cursor:pointer;
+      font-size:18px;
+      color:red;
+    }
   </style>
 </head>
 <body>
@@ -16,53 +38,78 @@
 
 <table id="table"></table>
 
+<div id="modal">
+  <div id="chartBox">
+    <span id="closeBtn" onclick="closeChart()">❌ Close</span>
+    <h3 id="chartTitle"></h3>
+    <div id="chart" style="height:90%"></div>
+  </div>
+</div>
+
 <script>
 const API = "https://script.google.com/macros/s/AKfycbz6b1U-dxJ9L2pCGNwp5BHKxaMOofKGQcF-y3sGOFzQ7HqVjl2LZOzoKIxHLcG_ly_I/exec";
 
-async function loadData(){
-  try {
-    let res = await fetch(API);
-    let data = await res.json();
-
-    let html = `
-    <tr>
-      <th>Stock</th>
-      <th>% Chg</th>
-      <th>Volume</th>
-      <th>Value</th>
-      <th>Final</th>
-    </tr>`;
-
-    data.forEach(d=>{
-      html += `
-      <tr onclick='showCandle(${JSON.stringify(d)})'>
-        <td>${d.stock}</td>
-        <td>${d.change}</td>
-        <td>${d.volume}</td>
-        <td>${d.value}</td>
-        <td>${d.final}</td>
-      </tr>`;
-    });
-
-    document.getElementById("table").innerHTML = html;
-
-  } catch(err) {
-    console.error("API Error:", err);
-  }
+function format(num){
+  return Number(num).toFixed(2);
 }
 
-// Simple alert for candle
-function showCandle(d){
-  alert(
-    `📊 ${d.stock}\nOpen: ${d.candle.open}\nHigh: ${d.candle.high}\nLow: ${d.candle.low}\nClose: ${d.candle.close}`
+async function loadData(){
+  let res = await fetch(API);
+  let data = await res.json();
+
+  let html = `
+  <tr>
+    <th>Stock</th>
+    <th>% Change</th>
+    <th>Volume</th>
+    <th>Value</th>
+    <th>Final</th>
+  </tr>`;
+
+  data.forEach(d=>{
+    html += `
+    <tr onclick='showChart(${JSON.stringify(d)})'>
+      <td>${d.stock}</td>
+      <td>${format(d.change)}</td>
+      <td>${format(d.volume)}</td>
+      <td>${format(d.value)}</td>
+      <td>${d.final}</td>
+    </tr>`;
+  });
+
+  document.getElementById("table").innerHTML = html;
+}
+
+let chart, series;
+
+function showChart(d){
+  document.getElementById("modal").style.display="block";
+  document.getElementById("chartTitle").innerText = d.stock + " Candle";
+
+  document.getElementById("chart").innerHTML="";
+
+  chart = LightweightCharts.createChart(
+    document.getElementById("chart"),
+    { layout:{background:{color:"#111"}, textColor:"#fff"} }
   );
+
+  series = chart.addCandlestickSeries();
+
+  series.setData([{
+    time: Math.floor(Date.now()/1000),
+    open: d.candle.open,
+    high: d.candle.high,
+    low: d.candle.low,
+    close: d.candle.close
+  }]);
+}
+
+function closeChart(){
+  document.getElementById("modal").style.display="none";
 }
 
 loadData();
-
-// Auto reload every 5 seconds
 setInterval(loadData, 5000);
 </script>
-
 </body>
 </html>
