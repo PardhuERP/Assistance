@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Stocks</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0D0D0D; color:#fff; }
+    table { width:100%; border-collapse: collapse; margin-top:20px; }
+    th,td { padding:10px; border:1px solid #444; text-align:center; }
+    th { background:#222; }
+    tr:hover { background:#333; cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<h2 style="text-align:center">📈 Live Stock Scanner</h2>
+
+<table id="table"></table>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbz6b1U-dxJ9L2pCGNwp5BHKxaMOofKGQcF-y3sGOFzQ7HqVjl2LZOzoKIxHLcG_ly_I/exec";
+
+async function loadData(){
+  try {
+    let res = await fetch(API);
+    let data = await res.json();
+
+    let html = `
+    <tr>
+      <th>Stock</th>
+      <th>% Chg</th>
+      <th>Volume</th>
+      <th>Value</th>
+      <th>Final</th>
+    </tr>`;
+
+    data.forEach(d=>{
+      html += `
+      <tr onclick='showCandle(${JSON.stringify(d)})'>
+        <td>${d.stock}</td>
+        <td>${d.change}</td>
+        <td>${d.volume}</td>
+        <td>${d.value}</td>
+        <td>${d.final}</td>
+      </tr>`;
+    });
+
+    document.getElementById("table").innerHTML = html;
+
+  } catch(err) {
+    console.error("API Error:", err);
+  }
+}
+
+// Simple alert for candle
+function showCandle(d){
+  alert(
+    `📊 ${d.stock}\nOpen: ${d.candle.open}\nHigh: ${d.candle.high}\nLow: ${d.candle.low}\nClose: ${d.candle.close}`
+  );
+}
+
+loadData();
+
+// Auto reload every 5 seconds
+setInterval(loadData, 5000);
+</script>
+
+</body>
+</html>
